@@ -74,6 +74,11 @@ enum Value {
     Int(i32),
     Str(String)
 }
+#[derive(Debug, PartialEq)]
+struct ASTNode {
+    tok: Token,
+    branchs: Option<Vec<ASTNode>>,
+}
 fn main() {
     let args: Vec<String> = env::args().collect();
     let file_path: String = args[1].clone();
