@@ -1,3 +1,7 @@
+use std::env;
+use std::fs;
+
+#[derive(Debug)]
 enum Token {
     OpeningParen,
     ClosingParen,
@@ -15,6 +19,9 @@ struct Lexer {
     ptr: usize,
 }
 impl Lexer {
+    fn len(&self) -> usize {
+        return self.buf.as_bytes().len();
+    }
     fn getch(&mut self) -> char {
         let ch: char = self.buf.as_bytes()[self.ptr] as char;
         self.ptr += 1;
@@ -33,11 +40,13 @@ impl Lexer {
             }
             match tempbuf.parse::<i32>() {
                 Ok(n) => Token::Num(n),
-                Err(e) => Token::Identifier(tempbuf),
+                Err(_) => Token::Identifier(tempbuf),
             }
         }
         else {
             match ch {
+                '(' => Token::OpeningParen,
+                ')' => Token::ClosingParen,
                 '+' => Token::Add,
                 '-' => Token::Sub,
                 '*' => Token::Mul,
@@ -49,5 +58,15 @@ impl Lexer {
     }
 }
 fn main() {
-    println!("Hello, world!");
+    let args: Vec<String> = env::args().collect();
+    let file_path: String = args[1].clone();
+    let contents = fs::read_to_string(file_path)
+        .expect("File does not exist");
+    let mut lexer: Lexer = Lexer{
+        buf: contents,
+        ptr: 0,
+    };
+    while lexer.ptr < lexer.len() {
+        println!("{:?}", lexer.next_token());
+    }
 }
