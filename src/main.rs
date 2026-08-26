@@ -41,22 +41,38 @@ impl Lexer {
                 ch = self.getch();
             }
             self.backch();
-            return match tempbuf.parse::<i32>() {
+            match tempbuf.parse::<i32>() {
                 Ok(n) => Token::Num(n),
                 Err(_) => Token::Identifier(tempbuf),
             }
         }
-        match ch {
-            '(' => Token::OpeningParen,
-            ')' => Token::ClosingParen,
-            '+' => Token::Add,
-            '-' => Token::Sub,
-            '*' => Token::Mul,
-            '/' => Token::Div,
-            '%' => Token::Mod,
-            _ => self.next_token(),
+        else {
+            match ch {
+                '(' => Token::OpeningParen,
+                ')' => Token::ClosingParen,
+                '+' => Token::Add,
+                '-' => Token::Sub,
+                '*' => Token::Mul,
+                '/' => Token::Div,
+                '%' => Token::Mod,
+                '"' => {
+                    let mut tempbuf: String = String::new();
+                    ch = self.getch();
+                    while ch != '"' {
+                        tempbuf.push(ch);
+                        ch = self.getch();
+                    }
+                    Token::Str(tempbuf)
+                },
+                _ => self.next_token(),
+            }
         }
     }
+}
+#[derive(Debug, PartialEq)]
+enum Value {
+    Int(i32),
+    Str(String)
 }
 fn main() {
     let args: Vec<String> = env::args().collect();
