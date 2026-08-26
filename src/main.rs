@@ -2,17 +2,21 @@ use std::env;
 use std::fs;
 
 #[derive(Debug, PartialEq)]
+enum Operator {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Mod,
+}
+#[derive(Debug, PartialEq)]
 enum Token {
     OpeningParen,
     ClosingParen,
     Identifier(String),
     Str(String),
     Num(i32),
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Mod,
+    Operator(Operator),
     FileEnd,
 }
 struct Lexer {
@@ -50,11 +54,11 @@ impl Lexer {
             match ch {
                 '(' => Token::OpeningParen,
                 ')' => Token::ClosingParen,
-                '+' => Token::Add,
-                '-' => Token::Sub,
-                '*' => Token::Mul,
-                '/' => Token::Div,
-                '%' => Token::Mod,
+                '+' => Token::Operator(Operator::Add),
+                '-' => Token::Operator(Operator::Sub),
+                '*' => Token::Operator(Operator::Mul),
+                '/' => Token::Operator(Operator::Div),
+                '%' => Token::Operator(Operator::Mod),
                 '"' => {
                     let mut tempbuf: String = String::new();
                     ch = self.getch();
@@ -72,12 +76,12 @@ impl Lexer {
 #[derive(Debug, PartialEq)]
 enum Value {
     Int(i32),
-    Str(String)
+    Str(String),
 }
 #[derive(Debug, PartialEq)]
-struct ASTNode {
-    tok: Token,
-    branchs: Option<Vec<ASTNode>>,
+enum ASTNode {
+    Litteral(Value),
+    Operator(Operator, Vec<ASTNode>),
 }
 fn main() {
     let args: Vec<String> = env::args().collect();
