@@ -89,10 +89,15 @@ fn put_file_tokens(file_path: String) {
         tok = lexer.next_token();
     }
 }
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum Value {
     Int(i32),
     Str(String),
+}
+impl Value {
+   fn extract_int(&self) -> i32 {
+       if let Value::Int(i) = self { *i } else { panic!("cant do math with strings silly!") }
+   }
 }
 #[derive(Debug, PartialEq)]
 enum ASTNode {
@@ -105,7 +110,7 @@ fn parser(lexer: &mut Lexer) -> ASTNode {
     match tok {
         Token::OpeningParen => {
             let tok: Token = lexer.next_token();
-            if let Token::Operator(Operator) = tok {
+            if let Token::Operator(operator) = tok {
                 let mut branchs: Vec<ASTNode> = Vec::new();
                 while lexer.last != Token::ClosingParen {
                     let new_node: ASTNode = parser(lexer);
@@ -116,7 +121,7 @@ fn parser(lexer: &mut Lexer) -> ASTNode {
                         branchs.push(new_node);
                     }
                 }
-                ASTNode::Operator(Operator, branchs)
+                ASTNode::Operator(operator, branchs)
             }
             else {
                 panic!("unexpected token {:?}", tok);
@@ -126,6 +131,28 @@ fn parser(lexer: &mut Lexer) -> ASTNode {
         Token::Num(i) => ASTNode::Litteral(Value::Int(i)),
         Token::Str(i) => ASTNode::Litteral(Value::Str(i)),
         _ => panic!("unexpected token {:?}", tok),
+    }
+}
+fn walker(astnode: &ASTNode) -> Value {
+    match astnode {
+        ASTNode::Litteral(i) => i.clone(),
+        ASTNode::Operator(operator, branchs) => {
+            let mut value: i32 = walker(&branchs[0]).extract_int();
+            let mut i: usize = 1;
+            while i < branchs.len() {
+                let inti: i32 = walker(&branchs[i]).extract_int();
+                value = match operator {
+                    Operator::Add => value + inti,
+                    Operator::Sub => value - inti,
+                    Operator::Mul => value * inti,
+                    Operator::Div => value / inti,
+                    Operator::Mod => value % inti,
+                };
+                i += 1;
+            }
+            Value::Int(value)
+        },
+        ASTNode::End => panic!("unexpected node"),
     }
 }
 fn main() {
@@ -141,4 +168,6 @@ fn main() {
     };
     let astnode: ASTNode = parser(&mut lexer);
     println!("{:?}", astnode);
+    let value: Value = walker(&astnode);
+    println!("{:?}", value);
 }
