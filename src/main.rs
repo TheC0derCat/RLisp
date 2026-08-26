@@ -1,7 +1,7 @@
 use std::env;
 use std::fs;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum Token {
     OpeningParen,
     ClosingParen,
@@ -13,17 +13,16 @@ enum Token {
     Mul,
     Div,
     Mod,
+    FileEnd,
 }
 struct Lexer {
-    buf: String,
+    buf: Vec<char>,
     ptr: usize,
 }
 impl Lexer {
-    fn len(&self) -> usize {
-        return self.buf.as_bytes().len();
-    }
     fn getch(&mut self) -> char {
-        let ch: char = self.buf.as_bytes()[self.ptr] as char;
+        let ch: char = self.buf[self.ptr];
+        // let ch: char = self.buf.as_bytes()[self.ptr] as char;
         self.ptr += 1;
         return ch;
     }
@@ -31,6 +30,9 @@ impl Lexer {
         self.ptr -= 1;
     }
     fn next_token(&mut self) -> Token {
+        if self.ptr >= self.buf.len() {
+            return Token::FileEnd;
+        }
         let mut ch: char = self.getch();
         if ch.is_alphanumeric() {
             let mut tempbuf: String = String::new();
@@ -38,22 +40,21 @@ impl Lexer {
                 tempbuf.push(ch);
                 ch = self.getch();
             }
-            match tempbuf.parse::<i32>() {
+            self.backch();
+            return match tempbuf.parse::<i32>() {
                 Ok(n) => Token::Num(n),
                 Err(_) => Token::Identifier(tempbuf),
             }
         }
-        else {
-            match ch {
-                '(' => Token::OpeningParen,
-                ')' => Token::ClosingParen,
-                '+' => Token::Add,
-                '-' => Token::Sub,
-                '*' => Token::Mul,
-                '/' => Token::Div,
-                '%' => Token::Mod,
-                _ => self.next_token(),
-            }
+        match ch {
+            '(' => Token::OpeningParen,
+            ')' => Token::ClosingParen,
+            '+' => Token::Add,
+            '-' => Token::Sub,
+            '*' => Token::Mul,
+            '/' => Token::Div,
+            '%' => Token::Mod,
+            _ => self.next_token(),
         }
     }
 }
@@ -63,10 +64,12 @@ fn main() {
     let contents = fs::read_to_string(file_path)
         .expect("File does not exist");
     let mut lexer: Lexer = Lexer{
-        buf: contents,
+        buf: contents.chars().collect(),
         ptr: 0,
     };
-    while lexer.ptr < lexer.len() {
-        println!("{:?}", lexer.next_token());
+    let mut tok: Token = lexer.next_token();
+    while tok != Token::FileEnd {
+        println!("{:?}", tok);
+        tok = lexer.next_token();
     }
 }
