@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Clone)]
 enum Operator {
+    Star,
     SetTo,
     Add,
     Sub,
@@ -57,6 +58,7 @@ impl Lexer {
             match ch {
                 '(' => Token::OpeningParen,
                 ')' => Token::ClosingParen,
+                '*' => Token::Operator(Operator::Star),
                 '=' => Token::Operator(Operator::SetTo),
                 '+' => Token::Operator(Operator::Add),
                 '-' => Token::Operator(Operator::Sub),
@@ -166,6 +168,15 @@ fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value {
         ASTNode::Litteral(i) => i.clone(),
         ASTNode::Operator(operator, branchs) => {
             match operator {
+                  Operator::Star => {
+                      let mut value: Value = walker(&branchs[0], &mut program_state);
+                      let mut j: usize = 1;
+                      while j < branchs.len() {
+                          value = walker(&branchs[j], &mut program_state);
+                          j += 1;
+                      }
+                      value
+                    },
                   Operator::SetTo => {
                       let seto: Value = walker(&branchs[1], &mut program_state);
                       program_state.variables.insert(
@@ -174,7 +185,8 @@ fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value {
                       );
                       seto
                   },
-                  Operator::Add => domath(branchs, |a, b| a + b, program_state),                  Operator::Sub => domath(branchs, |a, b| a - b, program_state),
+                  Operator::Add => domath(branchs, |a, b| a + b, program_state),
+                  Operator::Sub => domath(branchs, |a, b| a - b, program_state),
                   Operator::Mul => domath(branchs, |a, b| a * b, program_state),
                   Operator::Div => domath(branchs, |a, b| a / b, program_state),
                   Operator::Mod => domath(branchs, |a, b| a % b, program_state),
