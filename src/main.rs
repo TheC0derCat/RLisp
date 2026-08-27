@@ -116,7 +116,7 @@ fn parser(lexer: &mut Lexer) -> ASTNode {
             let tok: Token = lexer.next_token();
             if let Token::Operator(operator) = tok {
                 let mut branchs: Vec<ASTNode> = Vec::new();
-                while lexer.last != Token::ClosingParen {
+                loop {
                     let new_node: ASTNode = parser(lexer);
                     if new_node == ASTNode::End {
                         break;
@@ -128,7 +128,7 @@ fn parser(lexer: &mut Lexer) -> ASTNode {
                 ASTNode::Operator(operator, branchs)
             }
             else {
-                panic!("unexpected token {:?}", tok);
+                panic!("unexpected token {:?}, expected operator instead", tok);
             }
         },
         Token::ClosingParen => ASTNode::End,
