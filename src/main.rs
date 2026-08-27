@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Clone)]
 enum Operator {
+    SetTo,
     Add,
     Sub,
     Mul,
@@ -56,6 +57,7 @@ impl Lexer {
             match ch {
                 '(' => Token::OpeningParen,
                 ')' => Token::ClosingParen,
+                '=' => Token::Operator(Operator::SetTo),
                 '+' => Token::Operator(Operator::Add),
                 '-' => Token::Operator(Operator::Sub),
                 '*' => Token::Operator(Operator::Mul),
@@ -107,9 +109,17 @@ impl Value {
 enum ASTNode {
     Litteral(Value),
     Operator(Operator, Vec<ASTNode>),
+    Identifier(String),
     End,
 }
-fn parser(lexer: &mut Lexer) -> ASTNode {
+impl ASTNode {
+    fn extract_identifier(&self) -> String {
+        match self {
+            ASTNode::Identifier(i) => i.clone(),
+            _ => panic!("Cant extract identifier out of non identifier"),
+        }
+    }
+}fn parser(lexer: &mut Lexer) -> ASTNode {
     let tok: Token = lexer.next_token();
     match tok {
         Token::OpeningParen => {
@@ -134,33 +144,45 @@ fn parser(lexer: &mut Lexer) -> ASTNode {
         Token::ClosingParen => ASTNode::End,
         Token::Num(i) => ASTNode::Litteral(Value::Int(i)),
         Token::Str(i) => ASTNode::Litteral(Value::Str(i)),
+        Token::Identifier(i) => ASTNode::Identifier(i),
         _ => panic!("unexpected token {:?}", tok),
     }
 }
 struct ProgramState {
     variables: HashMap<String, Value>,
 }
-fn domath<F: Fn(i32, i32) -> i32>(branchs: &Vec<ASTNode>, f: F) -> Value {
-    let mut value: i32 = walker(&branchs[0]).extract_int();
+fn domath<F: Fn(i32, i32) -> i32>(branchs: &Vec<ASTNode>, f: F, mut program_state: &mut ProgramState) -> Value {
+    let mut value: i32 = walker(&branchs[0], &mut program_state).extract_int();
     let mut i: usize = 1;
     while i < branchs.len() {
-        let inti: i32 = walker(&branchs[i]).extract_int();
+        let inti: i32 = walker(&branchs[i], &mut program_state).extract_int();
         value = f(value, inti);
         i += 1;
     }
     Value::Int(value)
 }
-fn walker(astnode: &ASTNode) -> Value {
+fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value {
     match astnode {
         ASTNode::Litteral(i) => i.clone(),
         ASTNode::Operator(operator, branchs) => {
             match operator {
-                  Operator::Add => domath(branchs, |a, b| a + b),
-                  Operator::Sub => domath(branchs, |a, b| a - b),
-                  Operator::Mul => domath(branchs, |a, b| a * b),
-                  Operator::Div => domath(branchs, |a, b| a / b),
-                  Operator::Mod => domath(branchs, |a, b| a % b),
+                  Operator::SetTo => {
+                      let seto: Value = walker(&branchs[1], &mut program_state);
+                      program_state.variables.insert(
+                          branchs[0].extract_identifier(),
+                          seto.clone()
+                      );
+                      seto
+                  },
+                  Operator::Add => domath(branchs, |a, b| a + b, program_state),                  Operator::Sub => domath(branchs, |a, b| a - b, program_state),
+                  Operator::Mul => domath(branchs, |a, b| a * b, program_state),
+                  Operator::Div => domath(branchs, |a, b| a / b, program_state),
+                  Operator::Mod => domath(branchs, |a, b| a % b, program_state),
             }
+        },
+        ASTNode::Identifier(i) => match program_state.variables.get(i) {
+            Some(value) => value.clone(),
+            None => panic!("{i} does not exist!"),
         },
         _ => panic!("unexpected node"),
     }
@@ -176,8 +198,11 @@ fn main() {
         ptr: 0,
         last: Token::FileEnd,
     };
+    let mut program_state: ProgramState = ProgramState{
+        variables: HashMap::new(),
+    };
     let astnode: ASTNode = parser(&mut lexer);
     println!("{:?}", astnode);
-    let value: Value = walker(&astnode);
+    let value: Value = walker(&astnode, &mut program_state);
     println!("{:?}", value);
 }
