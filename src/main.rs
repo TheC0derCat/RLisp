@@ -1,5 +1,6 @@
 use std::env;
 use std::fs;
+use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Clone)]
 enum Operator {
@@ -95,9 +96,12 @@ enum Value {
     Str(String),
 }
 impl Value {
-   fn extract_int(&self) -> i32 {
-       if let Value::Int(i) = self { *i } else { panic!("cant do math with strings silly!") }
-   }
+    fn extract_int(&self) -> i32 {
+        match self {
+            Value::Int(i) => i.clone(),
+            _ => panic!("Cant extract int out of non number"),
+        }
+    }
 }
 #[derive(Debug, PartialEq)]
 enum ASTNode {
@@ -133,26 +137,32 @@ fn parser(lexer: &mut Lexer) -> ASTNode {
         _ => panic!("unexpected token {:?}", tok),
     }
 }
+struct ProgramState {
+    variables: HashMap<String, Value>,
+}
+fn domath<F: Fn(i32, i32) -> i32>(branchs: &Vec<ASTNode>, f: F) -> Value {
+    let mut value: i32 = walker(&branchs[0]).extract_int();
+    let mut i: usize = 1;
+    while i < branchs.len() {
+        let inti: i32 = walker(&branchs[i]).extract_int();
+        value = f(value, inti);
+        i += 1;
+    }
+    Value::Int(value)
+}
 fn walker(astnode: &ASTNode) -> Value {
     match astnode {
         ASTNode::Litteral(i) => i.clone(),
         ASTNode::Operator(operator, branchs) => {
-            let mut value: i32 = walker(&branchs[0]).extract_int();
-            let mut i: usize = 1;
-            while i < branchs.len() {
-                let inti: i32 = walker(&branchs[i]).extract_int();
-                value = match operator {
-                    Operator::Add => value + inti,
-                    Operator::Sub => value - inti,
-                    Operator::Mul => value * inti,
-                    Operator::Div => value / inti,
-                    Operator::Mod => value % inti,
-                };
-                i += 1;
+            match operator {
+                  Operator::Add => domath(branchs, |a, b| a + b),
+                  Operator::Sub => domath(branchs, |a, b| a - b),
+                  Operator::Mul => domath(branchs, |a, b| a * b),
+                  Operator::Div => domath(branchs, |a, b| a / b),
+                  Operator::Mod => domath(branchs, |a, b| a % b),
             }
-            Value::Int(value)
         },
-        ASTNode::End => panic!("unexpected node"),
+        _ => panic!("unexpected node"),
     }
 }
 fn main() {
