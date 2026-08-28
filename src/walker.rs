@@ -30,6 +30,21 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
         ASTNode::Litteral(i) => i.clone(),
         ASTNode::Operator(operator, branchs) => {
             match operator {
+                  Operator::Input => domath(branchs, |a, b| a + b, program_state),
+                  Operator::Output => {
+                      let mut value: Value = walker(&branchs[0], &mut program_state);
+                      let mut j: usize = 0;
+                      while j < branchs.len() {
+                          value = walker(&branchs[j], &mut program_state);
+                          match value {
+                              Value::Int(ref i) => println!("{i}"),
+                              Value::Str(ref i) => println!("{i}"),
+                              Value::Bool(ref i) => println!("{i}"),
+                          }
+                          j += 1;
+                      }
+                      value
+                  },
                   Operator::Star => {
                       let mut value: Value = walker(&branchs[0], &mut program_state);
                       let mut j: usize = 1;

@@ -1,6 +1,8 @@
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Operator {
+    Input,
+    Output,
     Star,
     SetTo,
     Add,
@@ -64,6 +66,8 @@ impl Lexer {
             match ch {
                 '(' => Token::OpeningParen,
                 ')' => Token::ClosingParen,
+                '<' => Token::Operator(Operator::Input),
+                '>' => Token::Operator(Operator::Output),
                 ':' => Token::Operator(Operator::Star),
                 '=' => Token::Operator(Operator::SetTo),
                 '+' => Token::Operator(Operator::Add),
