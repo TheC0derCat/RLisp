@@ -58,7 +58,7 @@ impl Lexer {
             match ch {
                 '(' => Token::OpeningParen,
                 ')' => Token::ClosingParen,
-                '*' => Token::Operator(Operator::Star),
+                ':' => Token::Operator(Operator::Star),
                 '=' => Token::Operator(Operator::SetTo),
                 '+' => Token::Operator(Operator::Add),
                 '-' => Token::Operator(Operator::Sub),
