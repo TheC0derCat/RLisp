@@ -83,6 +83,12 @@ impl Lexer {
                     }
                     Token::Str(tempbuf)
                 },
+                '#' => {
+                    while ch != '\n' {
+                        ch = self.getch();
+                    }
+                    self.next_token()
+                },
                 _ => self.next_token(),
             }
         };
