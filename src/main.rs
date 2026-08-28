@@ -11,6 +11,9 @@ enum Operator {
     Mul,
     Div,
     Mod,
+    And,
+    Or,
+    Not,
 }
 #[derive(Debug, PartialEq, Clone)]
 enum Token {
@@ -20,6 +23,8 @@ enum Token {
     Str(String),
     Num(i32),
     Operator(Operator),
+    True,
+    False,
     FileEnd,
 }
 struct Lexer {
@@ -51,7 +56,11 @@ impl Lexer {
             self.backch();
             match tempbuf.parse::<i32>() {
                 Ok(n) => Token::Num(n),
-                Err(_) => Token::Identifier(tempbuf),
+                Err(_) => match tempbuf.as_str() {
+                    "true" => Token::True,
+                    "false" => Token::False,
+                    _ => Token::Identifier(tempbuf),
+                },
             }
         }
         else {
@@ -65,6 +74,9 @@ impl Lexer {
                 '*' => Token::Operator(Operator::Mul),
                 '/' => Token::Operator(Operator::Div),
                 '%' => Token::Operator(Operator::Mod),
+                '&' => Token::Operator(Operator::And),
+                '|' => Token::Operator(Operator::Or),
+                '!' => Token::Operator(Operator::Not),
                 '"' => {
                     let mut tempbuf: String = String::new();
                     ch = self.getch();
@@ -98,11 +110,20 @@ fn put_file_tokens(file_path: String) {
 enum Value {
     Int(i32),
     Str(String),
+    Bool(bool),
 }
 impl Value {
     fn extract_int(&self) -> i32 {
         match self {
             Value::Int(i) => i.clone(),
+            Value::Str(i) => i.parse::<i32>().expect("cant extract int out of non number"),
+            Value::Bool(i) => if *i {1} else {0},
+            _ => panic!("Cant extract int out of non number"),
+        }
+    }
+    fn extract_bool(&self) -> bool {
+        match self {
+            Value::Bool(i) => i.clone(),
             _ => panic!("Cant extract int out of non number"),
         }
     }
@@ -146,6 +167,8 @@ impl ASTNode {
         Token::ClosingParen => ASTNode::End,
         Token::Num(i) => ASTNode::Litteral(Value::Int(i)),
         Token::Str(i) => ASTNode::Litteral(Value::Str(i)),
+        Token::True => ASTNode::Litteral(Value::Bool(true)),
+        Token::False => ASTNode::Litteral(Value::Bool(false)),
         Token::Identifier(i) => ASTNode::Identifier(i),
         _ => panic!("unexpected token {:?}", tok),
     }
@@ -162,6 +185,16 @@ fn domath<F: Fn(i32, i32) -> i32>(branchs: &Vec<ASTNode>, f: F, mut program_stat
         i += 1;
     }
     Value::Int(value)
+}
+fn dologic<F: Fn(bool, bool) -> bool>(branchs: &Vec<ASTNode>, f: F, mut program_state: &mut ProgramState) -> Value {
+    let mut value: bool = walker(&branchs[0], &mut program_state).extract_bool();
+    let mut i: usize = 1;
+    while i < branchs.len() {
+        let inti: bool = walker(&branchs[i], &mut program_state).extract_bool();
+        value = f(value, inti);
+        i += 1;
+    }
+    Value::Bool(value)
 }
 fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value {
     match astnode {
@@ -190,6 +223,9 @@ fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value {
                   Operator::Mul => domath(branchs, |a, b| a * b, program_state),
                   Operator::Div => domath(branchs, |a, b| a / b, program_state),
                   Operator::Mod => domath(branchs, |a, b| a % b, program_state),
+                  Operator::And => dologic(branchs, |a, b| a && b, program_state),
+                  Operator::Or => dologic(branchs, |a, b| a || b, program_state),
+                  Operator::Not => Value::Bool(!(walker(&branchs[0], &mut program_state).extract_bool())),
             }
         },
         ASTNode::Identifier(i) => match program_state.variables.get(i) {
