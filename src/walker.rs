@@ -60,7 +60,7 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
                           j += 1;
                       }
                       value
-                    },
+                  },
                   Operator::SetTo => {
                       let seto: Value = walker(&branchs[1], &mut program_state);
                       program_state.variables.insert(
@@ -68,6 +68,18 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
                           seto.clone()
                       );
                       seto
+                  },
+                  Operator::Equality => {
+                      let mut boolean: bool = true;
+                      let mut value: Value = walker(&branchs[0], &mut program_state);
+                      let mut j: usize = 1;
+                      while j < branchs.len() {
+                          let new_value = walker(&branchs[j], &mut program_state);
+                          boolean = value == new_value;
+                          value = walker(&branchs[j], &mut program_state);
+                          j += 1;
+                      }
+                      Value::Bool(boolean)
                   },
                   Operator::Add => domath(branchs, |a, b| a + b, program_state),
                   Operator::Sub => domath(branchs, |a, b| a - b, program_state),

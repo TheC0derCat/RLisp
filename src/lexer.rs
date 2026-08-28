@@ -1,3 +1,4 @@
+use crate::fs;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Operator {
@@ -13,6 +14,7 @@ pub enum Operator {
     And,
     Or,
     Not,
+    Equality,
 }
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
@@ -69,7 +71,15 @@ impl Lexer {
                 '<' => Token::Operator(Operator::Input),
                 '>' => Token::Operator(Operator::Output),
                 ':' => Token::Operator(Operator::Star),
-                '=' => Token::Operator(Operator::SetTo),
+                '=' => {
+                    if self.buf[self.ptr] == '=' {
+                        self.ptr += 1;
+                        Token::Operator(Operator::Equality)                        
+                    } 
+                    else {
+                        Token::Operator(Operator::SetTo)
+                    }
+                },
                 '+' => Token::Operator(Operator::Add),
                 '-' => Token::Operator(Operator::Sub),
                 '*' => Token::Operator(Operator::Mul),
@@ -99,17 +109,17 @@ impl Lexer {
         return self.last.clone();
     }
 }
-// pub fn put_file_tokens(file_path: String) {
-//     let contents = fs::read_to_string(file_path)
-//         .expect("File does not exist");
-//     let mut lexer: Lexer = Lexer{
-//         buf: contents.chars().collect(),
-//         ptr: 0,
-//         last: Token::FileEnd,
-//     };
-//     let mut tok: Token = lexer.next_token();
-//     while tok != Token::FileEnd {
-//         println!("{:?}", tok);
-//         tok = lexer.next_token();
-//     }
-// }
+pub fn put_file_tokens(file_path: String) {
+    let contents = fs::read_to_string(file_path)
+        .expect("File does not exist");
+    let mut lexer: Lexer = Lexer{
+        buf: contents.chars().collect(),
+        ptr: 0,
+        last: Token::FileEnd,
+    };
+    let mut tok: Token = lexer.next_token();
+    while tok != Token::FileEnd {
+        println!("{:?}", tok);
+        tok = lexer.next_token();
+    }
+}
