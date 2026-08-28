@@ -1,6 +1,8 @@
 use crate::parser::*;
 use crate::lexer::*;
 use std::collections::HashMap;
+use std::io;
+use std::io::Write;
 
 pub struct ProgramState {
     pub variables: HashMap<String, Value>,
@@ -30,7 +32,12 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
         ASTNode::Litteral(i) => i.clone(),
         ASTNode::Operator(operator, branchs) => {
             match operator {
-                  Operator::Input => domath(branchs, |a, b| a + b, program_state),
+                  Operator::Input => {
+                      let mut buffer = String::new();
+                      io::stdout().flush();
+                      io::stdin().read_line(&mut buffer).expect("failed to readline");
+                      Value::Str(buffer.trim().to_string())
+                  },
                   Operator::Output => {
                       let mut value: Value = walker(&branchs[0], &mut program_state);
                       let mut j: usize = 0;

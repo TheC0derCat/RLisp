@@ -17,7 +17,16 @@ impl Value {
     pub fn extract_bool(&self) -> bool {
         match self {
             Value::Bool(i) => i.clone(),
-            _ => panic!("Cant extract int out of non number"),
+            Value::Int(i) => match i {
+                1 => true,
+                0 => false,
+                _ => panic!("cant extract bool from non bool"),
+            },
+            Value::Str(i) => match i.as_str() {
+                "true" => true,
+                "false" => false,
+                _ => panic!("cant extract bool from non bool"),
+            }
         }
     }
 }
