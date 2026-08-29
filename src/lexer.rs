@@ -2,6 +2,7 @@ use crate::fs;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Operator {
+    If,
     Input,
     Output,
     Star,
@@ -60,6 +61,7 @@ impl Lexer {
                 Err(_) => match tempbuf.as_str() {
                     "true" => Token::True,
                     "false" => Token::False,
+                    "if" => Token::Operator(Operator::If),
                     _ => Token::Identifier(tempbuf),
                 },
             }

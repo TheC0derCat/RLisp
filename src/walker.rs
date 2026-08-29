@@ -32,6 +32,13 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
         ASTNode::Litteral(i) => i.clone(),
         ASTNode::Operator(operator, branchs) => {
             match operator {
+                  Operator::If => {
+                      if walker(&branchs[0], &mut program_state).extract_bool() {
+                          walker(&branchs[1], &mut program_state)
+                      }
+                      else {
+                          walker(&branchs[2], &mut program_state)
+                      }                  },
                   Operator::Input => {
                       let mut buffer = String::new();
                       io::stdout().flush();
