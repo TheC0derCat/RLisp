@@ -11,10 +11,12 @@ example program:
 ```
 
 another:
-```
+```lisp
 (:
-	(= a 1)
-	(loop 5 (= a (+ a 1)))
-	(> a)
+	(= n 10)
+	(loop n
+	    (= n (+ n 1))
+	)
+	(> n)
 )
 ```

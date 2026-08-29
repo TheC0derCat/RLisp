@@ -48,7 +48,7 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
             }
             Operator::Loop => {
                 let loop_max: i32 = walker(&branchs[0], &mut program_state).extract_int();
-                let mut j: usize = 1;
+                let mut j: usize = 0;
                 while j < loop_max.try_into().unwrap() {
                     walker(&branchs[1], &mut program_state);
                     j += 1;
