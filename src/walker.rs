@@ -98,7 +98,8 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
                     .variables
                     .insert(branchs[0].extract_identifier(), seto.clone());
                 seto
-            }
+            },
+            Operator::Exit => std::process::exit(0),
             Operator::Equality => {
                 let mut boolean: bool = true;
                 let mut value: Value = walker(&branchs[0], &mut program_state);

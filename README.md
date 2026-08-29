@@ -35,3 +35,16 @@ example programs:
 	(n)
 )
 ```
+
+```lisp
+(:
+	(> "what is the best animal")
+	(= i (<))
+	(>
+		(if (== i "cat")
+			"correct"
+			"wrong"
+		)
+	)
+)
+```
