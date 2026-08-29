@@ -1,5 +1,5 @@
-use crate::parser::*;
 use crate::lexer::*;
+use crate::parser::*;
 use std::collections::HashMap;
 use std::io;
 use std::io::Write;
@@ -7,7 +7,11 @@ use std::io::Write;
 pub struct ProgramState {
     pub variables: HashMap<String, Value>,
 }
-pub fn domath<F: Fn(i32, i32) -> i32>(branchs: &Vec<ASTNode>, f: F, mut program_state: &mut ProgramState) -> Value {
+pub fn domath<F: Fn(i32, i32) -> i32>(
+    branchs: &Vec<ASTNode>,
+    f: F,
+    mut program_state: &mut ProgramState,
+) -> Value {
     let mut value: i32 = walker(&branchs[0], &mut program_state).extract_int();
     let mut i: usize = 1;
     while i < branchs.len() {
@@ -17,7 +21,11 @@ pub fn domath<F: Fn(i32, i32) -> i32>(branchs: &Vec<ASTNode>, f: F, mut program_
     }
     Value::Int(value)
 }
-pub fn dologic<F: Fn(bool, bool) -> bool>(branchs: &Vec<ASTNode>, f: F, mut program_state: &mut ProgramState) -> Value {
+pub fn dologic<F: Fn(bool, bool) -> bool>(
+    branchs: &Vec<ASTNode>,
+    f: F,
+    mut program_state: &mut ProgramState,
+) -> Value {
     let mut value: bool = walker(&branchs[0], &mut program_state).extract_bool();
     let mut i: usize = 1;
     while i < branchs.len() {
@@ -30,73 +38,81 @@ pub fn dologic<F: Fn(bool, bool) -> bool>(branchs: &Vec<ASTNode>, f: F, mut prog
 pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value {
     match astnode {
         ASTNode::Litteral(i) => i.clone(),
-        ASTNode::Operator(operator, branchs) => {
-            match operator {
-                  Operator::If => {
-                      if walker(&branchs[0], &mut program_state).extract_bool() {
-                          walker(&branchs[1], &mut program_state)
-                      }
-                      else {
-                          walker(&branchs[2], &mut program_state)
-                      }                  },
-                  Operator::Input => {
-                      let mut buffer = String::new();
-                      io::stdout().flush();
-                      io::stdin().read_line(&mut buffer).expect("failed to readline");
-                      Value::Str(buffer.trim().to_string())
-                  },
-                  Operator::Output => {
-                      let mut value: Value = walker(&branchs[0], &mut program_state);
-                      let mut j: usize = 0;
-                      while j < branchs.len() {
-                          value = walker(&branchs[j], &mut program_state);
-                          match value {
-                              Value::Int(ref i) => println!("{i}"),
-                              Value::Str(ref i) => println!("{i}"),
-                              Value::Bool(ref i) => println!("{i}"),
-                          }
-                          j += 1;
-                      }
-                      value
-                  },
-                  Operator::Star => {
-                      let mut value: Value = walker(&branchs[0], &mut program_state);
-                      let mut j: usize = 1;
-                      while j < branchs.len() {
-                          value = walker(&branchs[j], &mut program_state);
-                          j += 1;
-                      }
-                      value
-                  },
-                  Operator::SetTo => {
-                      let seto: Value = walker(&branchs[1], &mut program_state);
-                      program_state.variables.insert(
-                          branchs[0].extract_identifier(),
-                          seto.clone()
-                      );
-                      seto
-                  },
-                  Operator::Equality => {
-                      let mut boolean: bool = true;
-                      let mut value: Value = walker(&branchs[0], &mut program_state);
-                      let mut j: usize = 1;
-                      while j < branchs.len() {
-                          let new_value = walker(&branchs[j], &mut program_state);
-                          boolean = value == new_value;
-                          value = walker(&branchs[j], &mut program_state);
-                          j += 1;
-                      }
-                      Value::Bool(boolean)
-                  },
-                  Operator::Add => domath(branchs, |a, b| a + b, program_state),
-                  Operator::Sub => domath(branchs, |a, b| a - b, program_state),
-                  Operator::Mul => domath(branchs, |a, b| a * b, program_state),
-                  Operator::Div => domath(branchs, |a, b| a / b, program_state),
-                  Operator::Mod => domath(branchs, |a, b| a % b, program_state),
-                  Operator::And => dologic(branchs, |a, b| a && b, program_state),
-                  Operator::Or => dologic(branchs, |a, b| a || b, program_state),
-                  Operator::Not => Value::Bool(!(walker(&branchs[0], &mut program_state).extract_bool())),
+        ASTNode::Operator(operator, branchs) => match operator {
+            Operator::If => {
+                if walker(&branchs[0], &mut program_state).extract_bool() {
+                    walker(&branchs[1], &mut program_state)
+                } else {
+                    walker(&branchs[2], &mut program_state)
+                }
             }
+            Operator::Loop => {
+                let loop_max: i32 = walker(&branchs[0], &mut program_state).extract_int();
+                let mut j: usize = 1;
+                while j < loop_max.try_into().unwrap() {
+                    walker(&branchs[1], &mut program_state);
+                    j += 1;
+                }
+                Value::Int(loop_max)
+            }
+            Operator::Input => {
+                let mut buffer = String::new();
+                io::stdout().flush();
+                io::stdin()
+                    .read_line(&mut buffer)
+                    .expect("failed to readline");
+                Value::Str(buffer.trim().to_string())
+            }
+            Operator::Output => {
+                let mut value: Value = walker(&branchs[0], &mut program_state);
+                let mut j: usize = 0;
+                while j < branchs.len() {
+                    value = walker(&branchs[j], &mut program_state);
+                    match value {
+                        Value::Int(ref i) => println!("{i}"),
+                        Value::Str(ref i) => println!("{i}"),
+                        Value::Bool(ref i) => println!("{i}"),
+                    }
+                    j += 1;
+                }
+                value
+            }
+            Operator::Star => {
+                let mut value: Value = walker(&branchs[0], &mut program_state);
+                let mut j: usize = 1;
+                while j < branchs.len() {
+                    value = walker(&branchs[j], &mut program_state);
+                    j += 1;
+                }
+                value
+            }
+            Operator::SetTo => {
+                let seto: Value = walker(&branchs[1], &mut program_state);
+                program_state
+                    .variables
+                    .insert(branchs[0].extract_identifier(), seto.clone());
+                seto
+            }
+            Operator::Equality => {
+                let mut boolean: bool = true;
+                let mut value: Value = walker(&branchs[0], &mut program_state);
+                let mut j: usize = 1;
+                while j < branchs.len() {
+                    let new_value = walker(&branchs[j], &mut program_state);
+                    boolean = value == new_value;
+                    value = walker(&branchs[j], &mut program_state);
+                    j += 1;
+                }
+                Value::Bool(boolean)
+            }
+            Operator::Add => domath(branchs, |a, b| a + b, program_state),
+            Operator::Sub => domath(branchs, |a, b| a - b, program_state),
+            Operator::Mul => domath(branchs, |a, b| a * b, program_state),
+            Operator::Div => domath(branchs, |a, b| a / b, program_state),
+            Operator::Mod => domath(branchs, |a, b| a % b, program_state),
+            Operator::And => dologic(branchs, |a, b| a && b, program_state),
+            Operator::Or => dologic(branchs, |a, b| a || b, program_state),
+            Operator::Not => Value::Bool(!(walker(&branchs[0], &mut program_state).extract_bool())),
         },
         ASTNode::Identifier(i) => match program_state.variables.get(i) {
             Some(value) => value.clone(),

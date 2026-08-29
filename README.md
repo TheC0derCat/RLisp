@@ -9,3 +9,12 @@ example program:
 	(> c)
 )
 ```
+
+another:
+```
+(:
+	(= a 1)
+	(loop 5 (= a (+ a 1)))
+	(> a)
+)
+```

@@ -1,6 +1,6 @@
-use std::fs;
 use std::collections::HashMap;
 use std::env;
+use std::fs;
 
 mod lexer;
 use lexer::*;
@@ -12,12 +12,12 @@ mod walker;
 use walker::*;
 
 fn interpret(contents: String) -> Value {
-    let mut lexer: Lexer = Lexer{
+    let mut lexer: Lexer = Lexer {
         buf: contents.chars().collect(),
         ptr: 0,
         last: Token::FileEnd,
     };
-    let mut program_state: ProgramState = ProgramState{
+    let mut program_state: ProgramState = ProgramState {
         variables: HashMap::new(),
     };
     let astnode: ASTNode = parser(&mut lexer);
@@ -28,14 +28,13 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let file_path: String = args[1].clone();
     put_file_tokens(file_path.clone());
-    let contents = fs::read_to_string(file_path)
-        .expect("File does not exist");
-    let mut lexer: Lexer = Lexer{
+    let contents = fs::read_to_string(file_path).expect("File does not exist");
+    let mut lexer: Lexer = Lexer {
         buf: contents.chars().collect(),
         ptr: 0,
         last: Token::FileEnd,
     };
-    let mut program_state: ProgramState = ProgramState{
+    let mut program_state: ProgramState = ProgramState {
         variables: HashMap::new(),
     };
     let astnode: ASTNode = parser(&mut lexer);
@@ -72,7 +71,15 @@ mod tests {
     #[test]
     fn test_and() {
         assert_eq!(interpret(" (& true false)".to_string()), Value::Bool(false));
-        assert_eq!(interpret("( & false false)".to_string()), Value::Bool(false));
+        assert_eq!(
+            interpret("( & false false)".to_string()),
+            Value::Bool(false)
+        );
         assert_eq!(interpret("(& true true )".to_string()), Value::Bool(true));
+    }
+    #[test]
+    fn test_if() {
+        assert_eq!(interpret("(if (== 1 5) 12 30)".to_string()), Value::Int(30));
+        assert_eq!(interpret("(if (== 7 7) 12 30)".to_string()), Value::Int(12));
     }
 }

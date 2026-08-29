@@ -3,6 +3,7 @@ use crate::fs;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Operator {
     If,
+    Loop,
     Input,
     Output,
     Star,
@@ -41,7 +42,7 @@ impl Lexer {
         self.ptr += 1;
         return ch;
     }
-    pub fn backch(&mut self){
+    pub fn backch(&mut self) {
         self.ptr -= 1;
     }
     pub fn next_token(&mut self) -> Token {
@@ -62,11 +63,11 @@ impl Lexer {
                     "true" => Token::True,
                     "false" => Token::False,
                     "if" => Token::Operator(Operator::If),
+                    "loop" => Token::Operator(Operator::Loop),
                     _ => Token::Identifier(tempbuf),
                 },
             }
-        }
-        else {
+        } else {
             match ch {
                 '(' => Token::OpeningParen,
                 ')' => Token::ClosingParen,
@@ -76,12 +77,11 @@ impl Lexer {
                 '=' => {
                     if self.buf[self.ptr] == '=' {
                         self.ptr += 1;
-                        Token::Operator(Operator::Equality)                        
-                    } 
-                    else {
+                        Token::Operator(Operator::Equality)
+                    } else {
                         Token::Operator(Operator::SetTo)
                     }
-                },
+                }
                 '+' => Token::Operator(Operator::Add),
                 '-' => Token::Operator(Operator::Sub),
                 '*' => Token::Operator(Operator::Mul),
@@ -98,13 +98,13 @@ impl Lexer {
                         ch = self.getch();
                     }
                     Token::Str(tempbuf)
-                },
+                }
                 '#' => {
                     while ch != '\n' {
                         ch = self.getch();
                     }
                     self.next_token()
-                },
+                }
                 _ => self.next_token(),
             }
         };
@@ -112,9 +112,8 @@ impl Lexer {
     }
 }
 pub fn put_file_tokens(file_path: String) {
-    let contents = fs::read_to_string(file_path)
-        .expect("File does not exist");
-    let mut lexer: Lexer = Lexer{
+    let contents = fs::read_to_string(file_path).expect("File does not exist");
+    let mut lexer: Lexer = Lexer {
         buf: contents.chars().collect(),
         ptr: 0,
         last: Token::FileEnd,

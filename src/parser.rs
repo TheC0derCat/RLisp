@@ -10,8 +10,16 @@ impl Value {
     pub fn extract_int(&self) -> i32 {
         match self {
             Value::Int(i) => i.clone(),
-            Value::Str(i) => i.parse::<i32>().expect("cant extract int out of non number"),
-            Value::Bool(i) => if *i {1} else {0},
+            Value::Str(i) => i
+                .parse::<i32>()
+                .expect("cant extract int out of non number"),
+            Value::Bool(i) => {
+                if *i {
+                    1
+                } else {
+                    0
+                }
+            }
         }
     }
     pub fn extract_bool(&self) -> bool {
@@ -26,7 +34,7 @@ impl Value {
                 "true" => true,
                 "false" => false,
                 _ => panic!("cant extract bool from non bool"),
-            }
+            },
         }
     }
 }
@@ -56,17 +64,15 @@ pub fn parser(lexer: &mut Lexer) -> ASTNode {
                     let new_node: ASTNode = parser(lexer);
                     if new_node == ASTNode::End {
                         break;
-                    }
-                    else {
+                    } else {
                         branchs.push(new_node);
                     }
                 }
                 ASTNode::Operator(operator, branchs)
-            }
-            else {
+            } else {
                 panic!("unexpected token {:?}, expected operator instead", tok);
             }
-        },
+        }
         Token::ClosingParen => ASTNode::End,
         Token::Num(i) => ASTNode::Litteral(Value::Int(i)),
         Token::Str(i) => ASTNode::Litteral(Value::Str(i)),
