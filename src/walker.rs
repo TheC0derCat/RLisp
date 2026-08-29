@@ -38,7 +38,11 @@ pub fn dologic<F: Fn(bool, bool) -> bool>(
 pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value {
     match astnode {
         ASTNode::Litteral(i) => i.clone(),
+        ASTNode::LambdaCall(i, _) => walker(&program_state.variables[i].extract_lambda(), &mut program_state),
         ASTNode::Operator(operator, branchs) => match operator {
+            Operator::Lambda => {
+                Value::Lambda(Box::new(branchs[0].clone()))
+            }
             Operator::If => {
                 if walker(&branchs[0], &mut program_state).extract_bool() {
                     walker(&branchs[1], &mut program_state)
@@ -72,6 +76,8 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
                         Value::Int(ref i) => println!("{i}"),
                         Value::Str(ref i) => println!("{i}"),
                         Value::Bool(ref i) => println!("{i}"),
+                        Value::Lambda(ref i) => println!{"trying to print a lambda? lolz",
+                        }
                     }
                     j += 1;
                 }

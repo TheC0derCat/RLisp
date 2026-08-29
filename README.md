@@ -1,6 +1,13 @@
 RLisp is a small toy language/interpreter written in rust and inspired by lisp
 
-example program:
+example programs:
+```lisp
+(
+	>
+	"Hello, world!"
+)
+```
+
 ```lisp
 (:
 	(= a (<))
@@ -10,7 +17,6 @@ example program:
 )
 ```
 
-another:
 ```lisp
 (:
 	(= n 10)
@@ -18,5 +24,14 @@ another:
 	    (= n (+ n 1))
 	)
 	(> n)
+)
+```
+
+```lisp
+(:
+	(= n ($ (> "hi")))
+	(n)
+	(n)
+	(n)
 )
 ```

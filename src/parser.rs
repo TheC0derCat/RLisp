@@ -5,6 +5,7 @@ pub enum Value {
     Int(i32),
     Str(String),
     Bool(bool),
+    Lambda(Box<ASTNode>),
 }
 impl Value {
     pub fn extract_int(&self) -> i32 {
@@ -20,6 +21,7 @@ impl Value {
                     0
                 }
             }
+            Value::Lambda(_) => panic!("cant extract int out of non number")
         }
     }
     pub fn extract_bool(&self) -> bool {
@@ -35,14 +37,22 @@ impl Value {
                 "false" => false,
                 _ => panic!("cant extract bool from non bool"),
             },
+            Value::Lambda(_) => panic!("cant extract bool from non bool")
+        }
+    }
+    pub fn extract_lambda(&self) -> ASTNode {
+        match self {
+            Value::Lambda(i) => <ASTNode as Clone>::clone(&**i),
+            _ => panic!("cant extract bool from non bool")
         }
     }
 }
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ASTNode {
     Litteral(Value),
     Operator(Operator, Vec<ASTNode>),
     Identifier(String),
+    LambdaCall(String, Box<ASTNode>),
     End,
 }
 impl ASTNode {
@@ -70,7 +80,13 @@ pub fn parser(lexer: &mut Lexer) -> ASTNode {
                 }
                 ASTNode::Operator(operator, branchs)
             } else {
-                panic!("unexpected token {:?}, expected operator instead", tok);
+                if let Token::Identifier(identifier) = tok {
+                    let new_node: ASTNode = parser(lexer);
+                    ASTNode::LambdaCall(identifier, Box::new(new_node))
+                }
+                else {
+                    panic!("unexpected token {:?}, expected operator instead", tok);
+                }
             }
         }
         Token::ClosingParen => ASTNode::End,

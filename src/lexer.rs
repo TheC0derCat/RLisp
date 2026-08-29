@@ -2,6 +2,7 @@ use crate::fs;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Operator {
+    Lambda,
     If,
     Loop,
     Input,
@@ -71,6 +72,7 @@ impl Lexer {
             match ch {
                 '(' => Token::OpeningParen,
                 ')' => Token::ClosingParen,
+                '$' => Token::Operator(Operator::Lambda),
                 '<' => Token::Operator(Operator::Input),
                 '>' => Token::Operator(Operator::Output),
                 ':' => Token::Operator(Operator::Star),
