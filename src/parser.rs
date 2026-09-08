@@ -6,7 +6,7 @@ pub enum Value {
     Int(i32),
     Str(String),
     Bool(bool),
-    Lambda(Box<ASTNode>, ProgramState),
+    Lambda(Box<ASTNode>, ProgramState, Vec<String>),
     Null,
 }
 impl Value {
@@ -23,7 +23,7 @@ impl Value {
                     0
                 }
             }
-            Value::Lambda(_, _) => panic!("cant extract int out of non number"),
+            Value::Lambda(_, _, _) => panic!("cant extract int out of non number"),
             Value::Null => 0,
         }
     }
@@ -40,13 +40,13 @@ impl Value {
                 "false" => false,
                 _ => panic!("cant extract bool from non bool"),
             },
-            Value::Lambda(_, _) => panic!("cant extract bool from non bool"),
+            Value::Lambda(_, _, _) => panic!("cant extract bool from non bool"),
             Value::Null => false,
         }
     }
     pub fn extract_lambda(&self) -> ASTNode {
         match self {
-            Value::Lambda(i, _) => <ASTNode as Clone>::clone(&**i),
+            Value::Lambda(i, _, _) => <ASTNode as Clone>::clone(&**i),
             _ => panic!("cant extract bool from non bool"),
         }
     }
@@ -56,7 +56,7 @@ pub enum ASTNode {
     Litteral(Value),
     Operator(Operator, Vec<ASTNode>),
     Identifier(String),
-    LambdaCall(String, Box<ASTNode>),
+    LambdaCall(String, Vec<ASTNode>),
     End,
 }
 impl ASTNode {
@@ -85,8 +85,18 @@ pub fn parser(lexer: &mut Lexer) -> ASTNode {
                 ASTNode::Operator(operator, branchs)
             } else {
                 if let Token::Identifier(identifier) = tok {
-                    let new_node: ASTNode = parser(lexer);
-                    ASTNode::LambdaCall(identifier, Box::new(new_node))
+                    let mut branchs: Vec<ASTNode> = Vec::new();
+                    loop {
+                        let new_node: ASTNode = parser(lexer);
+                        if new_node == ASTNode::End {
+                            break;
+                        } else {
+                            branchs.push(new_node);
+                        }
+                    }
+                    ASTNode::LambdaCall(identifier, branchs)
+                    // let new_node: ASTNode = parser(lexer);
+                    // ASTNode::LambdaCall(identifier, Box::new(new_node))
                 } else {
                     panic!("unexpected token {:?}, expected operator instead", tok);
                 }

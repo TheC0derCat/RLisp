@@ -1,10 +1,9 @@
 (:
-	(= a 50)
-	(= fun ($ (:
-		(> a)
-		(= a 10)
-	)))
-	(= a 5)
-	(fun)
-	(> a)
+	(= addoneandprint 
+		($
+			(> (+ a 1))
+			a
+		)
+	)	
+	(addoneandprint, 5)
 )

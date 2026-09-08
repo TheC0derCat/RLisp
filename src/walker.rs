@@ -39,21 +39,34 @@ pub fn dologic<F: Fn(bool, bool) -> bool>(
 pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value {
     match astnode {
         ASTNode::Litteral(i) => i.clone(),
-        ASTNode::LambdaCall(i, arg) => match program_state.variables[i].clone() {
-            Value::Lambda(ref extracted_lambda, ref closure_program_state) => {
+        ASTNode::LambdaCall(i, args) => match program_state.variables[i].clone() {
+            Value::Lambda(ref extracted_lambda, ref closure_program_state, names) => {
                 let mut new_program_state = closure_program_state.clone();
-                new_program_state
-                    .variables
-                    .insert("arg".to_string(), walker(&*arg, &mut program_state));
-                walker(
-                    &extracted_lambda,
-                    &mut new_program_state,
-                )
-            },
+                let mut i: usize = 0;
+                while i < args.len(){
+                    new_program_state
+                        .variables
+                        .insert(names[i].clone(), walker(&args[i], &mut program_state));
+                    i += 1;
+                }
+                //new_program_state
+                //    .variables
+                //    .insert("arg".to_string(), walker(&*arg, &mut program_state));
+                walker(&extracted_lambda, &mut new_program_state)
+            }
             _ => panic!("cant run non lambda as lambda"),
-        }
+        },
         ASTNode::Operator(operator, branchs) => match operator {
-            Operator::Lambda => Value::Lambda(Box::new(branchs[0].clone()), program_state.clone()),
+            Operator::Lambda => {
+                let mut argnames: Vec<String> = Vec::new();
+                for branch in &branchs[1..] {
+                    match branch {
+                        ASTNode::Identifier(id) => argnames.push(id.to_string()),
+                        _ => panic!("cant use a non identifier as a argument name!")
+                    }
+                }
+                Value::Lambda(Box::new(branchs[0].clone()), program_state.clone(), argnames)
+            }
             Operator::If => {
                 if walker(&branchs[0], &mut program_state).extract_bool() {
                     walker(&branchs[1], &mut program_state)
@@ -87,7 +100,7 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
                         Value::Int(ref i) => println!("{i}"),
                         Value::Str(ref i) => println!("{i}"),
                         Value::Bool(ref i) => println!("{i}"),
-                        Value::Lambda(ref i, _) => println! {"trying to print a lambda? lolz",
+                        Value::Lambda(ref i, _, _) => println! {"trying to print a lambda? lolz",
                         },
                         Value::Null => println!("Null"),
                     }
