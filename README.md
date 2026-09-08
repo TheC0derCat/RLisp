@@ -48,3 +48,15 @@ example programs:
 	)
 )
 ```
+
+```lisp
+(:
+	(= addoneandprint 
+		($
+			(> (+ a 1))
+			a
+		)
+	)	
+	(addoneandprint, 5)
+)
+```
