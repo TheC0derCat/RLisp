@@ -1,11 +1,13 @@
 use crate::lexer::*;
+use crate::walker::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Value {
     Int(i32),
     Str(String),
     Bool(bool),
-    Lambda(Box<ASTNode>),
+    Lambda(Box<ASTNode>, ProgramState),
+    Null,
 }
 impl Value {
     pub fn extract_int(&self) -> i32 {
@@ -21,7 +23,8 @@ impl Value {
                     0
                 }
             }
-            Value::Lambda(_) => panic!("cant extract int out of non number")
+            Value::Lambda(_, _) => panic!("cant extract int out of non number"),
+            Value::Null => 0,
         }
     }
     pub fn extract_bool(&self) -> bool {
@@ -37,13 +40,14 @@ impl Value {
                 "false" => false,
                 _ => panic!("cant extract bool from non bool"),
             },
-            Value::Lambda(_) => panic!("cant extract bool from non bool")
+            Value::Lambda(_, _) => panic!("cant extract bool from non bool"),
+            Value::Null => false,
         }
     }
     pub fn extract_lambda(&self) -> ASTNode {
         match self {
-            Value::Lambda(i) => <ASTNode as Clone>::clone(&**i),
-            _ => panic!("cant extract bool from non bool")
+            Value::Lambda(i, _) => <ASTNode as Clone>::clone(&**i),
+            _ => panic!("cant extract bool from non bool"),
         }
     }
 }
@@ -83,8 +87,7 @@ pub fn parser(lexer: &mut Lexer) -> ASTNode {
                 if let Token::Identifier(identifier) = tok {
                     let new_node: ASTNode = parser(lexer);
                     ASTNode::LambdaCall(identifier, Box::new(new_node))
-                }
-                else {
+                } else {
                     panic!("unexpected token {:?}, expected operator instead", tok);
                 }
             }

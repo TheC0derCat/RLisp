@@ -1,9 +1,10 @@
 (:
-	(> "what is 1 + 1, and i wont speak to you if you answer wrong!")
-	(= i (<))
-	(if (== i "2") 
-		"correct" 
-		(exit)
-	)
-	(> "very good job! :DDD")
+	(= a 50)
+	(= fun ($ (:
+		(> a)
+		(= a 10)
+	)))
+	(= a 5)
+	(fun)
+	(> a)
 )

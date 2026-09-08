@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::io;
 use std::io::Write;
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct ProgramState {
     pub variables: HashMap<String, Value>,
 }
@@ -38,11 +39,21 @@ pub fn dologic<F: Fn(bool, bool) -> bool>(
 pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value {
     match astnode {
         ASTNode::Litteral(i) => i.clone(),
-        ASTNode::LambdaCall(i, _) => walker(&program_state.variables[i].extract_lambda(), &mut program_state),
+        ASTNode::LambdaCall(i, arg) => match program_state.variables[i].clone() {
+            Value::Lambda(ref extracted_lambda, ref closure_program_state) => {
+                let mut new_program_state = closure_program_state.clone();
+                new_program_state
+                    .variables
+                    .insert("arg".to_string(), walker(&*arg, &mut program_state));
+                walker(
+                    &extracted_lambda,
+                    &mut new_program_state,
+                )
+            },
+            _ => panic!("cant run non lambda as lambda"),
+        }
         ASTNode::Operator(operator, branchs) => match operator {
-            Operator::Lambda => {
-                Value::Lambda(Box::new(branchs[0].clone()))
-            }
+            Operator::Lambda => Value::Lambda(Box::new(branchs[0].clone()), program_state.clone()),
             Operator::If => {
                 if walker(&branchs[0], &mut program_state).extract_bool() {
                     walker(&branchs[1], &mut program_state)
@@ -76,8 +87,9 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
                         Value::Int(ref i) => println!("{i}"),
                         Value::Str(ref i) => println!("{i}"),
                         Value::Bool(ref i) => println!("{i}"),
-                        Value::Lambda(ref i) => println!{"trying to print a lambda? lolz",
-                        }
+                        Value::Lambda(ref i, _) => println! {"trying to print a lambda? lolz",
+                        },
+                        Value::Null => println!("Null"),
                     }
                     j += 1;
                 }
@@ -98,7 +110,7 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
                     .variables
                     .insert(branchs[0].extract_identifier(), seto.clone());
                 seto
-            },
+            }
             Operator::Exit => std::process::exit(0),
             Operator::Equality => {
                 let mut boolean: bool = true;
@@ -125,6 +137,6 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
             Some(value) => value.clone(),
             None => panic!("{i} does not exist!"),
         },
-        _ => panic!("unexpected node"),
+        _ => Value::Null,
     }
 }
