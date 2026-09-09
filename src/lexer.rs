@@ -2,6 +2,8 @@ use crate::fs;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Operator {
+    List,
+    Nth,
     Lambda,
     If,
     Loop,
@@ -40,7 +42,6 @@ pub struct Lexer {
 impl Lexer {
     pub fn getch(&mut self) -> char {
         let ch: char = self.buf[self.ptr];
-        // let ch: char = self.buf.as_bytes()[self.ptr] as char;
         self.ptr += 1;
         return ch;
     }
@@ -62,6 +63,8 @@ impl Lexer {
             match tempbuf.parse::<i32>() {
                 Ok(n) => Token::Num(n),
                 Err(_) => match tempbuf.as_str() {
+                    "list" => Token::Operator(Operator::List),
+                    "nth" => Token::Operator(Operator::Nth),
                     "true" => Token::True,
                     "false" => Token::False,
                     "if" => Token::Operator(Operator::If),

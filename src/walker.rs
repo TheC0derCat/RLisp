@@ -43,7 +43,7 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
             Value::Lambda(ref extracted_lambda, ref closure_program_state, names) => {
                 let mut new_program_state = closure_program_state.clone();
                 let mut i: usize = 0;
-                while i < args.len(){
+                while i < args.len() {
                     new_program_state
                         .variables
                         .insert(names[i].clone(), walker(&args[i], &mut program_state));
@@ -57,15 +57,25 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
             _ => panic!("cant run non lambda as lambda"),
         },
         ASTNode::Operator(operator, branchs) => match operator {
+            Operator::List => Value::List(branchs.into_iter().map(|x| walker(x, &mut program_state)).rev().collect()),
+            Operator::Nth => {
+                let the_list: Vec<Value> = walker(&branchs[0], &mut program_state).extract_list();
+                let index: usize = walker(&branchs[1], &mut program_state).extract_int() as usize;
+                the_list[index].clone()
+            },
             Operator::Lambda => {
                 let mut argnames: Vec<String> = Vec::new();
                 for branch in &branchs[1..] {
                     match branch {
                         ASTNode::Identifier(id) => argnames.push(id.to_string()),
-                        _ => panic!("cant use a non identifier as a argument name!")
+                        _ => panic!("cant use a non identifier as a argument name!"),
                     }
                 }
-                Value::Lambda(Box::new(branchs[0].clone()), program_state.clone(), argnames)
+                Value::Lambda(
+                    Box::new(branchs[0].clone()),
+                    program_state.clone(),
+                    argnames,
+                )
             }
             Operator::If => {
                 if walker(&branchs[0], &mut program_state).extract_bool() {
@@ -103,6 +113,7 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
                         Value::Lambda(ref i, _, _) => println! {"trying to print a lambda? lolz",
                         },
                         Value::Null => println!("Null"),
+                        Value::List(ref i) => println!("{:?}", i),
                     }
                     j += 1;
                 }

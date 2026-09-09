@@ -3,6 +3,7 @@ use crate::walker::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Value {
+    List(Vec<Value>),
     Int(i32),
     Str(String),
     Bool(bool),
@@ -10,6 +11,12 @@ pub enum Value {
     Null,
 }
 impl Value {
+    pub fn extract_list(&self) -> Vec<Value> {
+        match self {
+            Value::List(i) => i.clone(),
+            _ => panic!("cant extract list from non list"),
+        }
+    }
     pub fn extract_int(&self) -> i32 {
         match self {
             Value::Int(i) => i.clone(),
@@ -23,7 +30,7 @@ impl Value {
                     0
                 }
             }
-            Value::Lambda(_, _, _) => panic!("cant extract int out of non number"),
+            _ => panic!("cant extract int out of non number"),
             Value::Null => 0,
         }
     }
@@ -40,7 +47,7 @@ impl Value {
                 "false" => false,
                 _ => panic!("cant extract bool from non bool"),
             },
-            Value::Lambda(_, _, _) => panic!("cant extract bool from non bool"),
+            _ => panic!("cant extract bool from non bool"),
             Value::Null => false,
         }
     }

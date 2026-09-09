@@ -1,9 +1,4 @@
 (:
-	(= addoneandprint 
-		($
-			(> (+ a 1))
-			a
-		)
-	)	
-	(addoneandprint, 5)
+	(= alist (list 1 5 4))
+	(> (nth alist 1))
 )

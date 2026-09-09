@@ -60,3 +60,9 @@ example programs:
 	(addoneandprint, 5)
 )
 ```
+```lisp
+(:
+	(= alist (list 1 5 4))
+	(> (nth alist 1))
+)
+```
