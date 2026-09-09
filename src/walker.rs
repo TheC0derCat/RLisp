@@ -57,12 +57,27 @@ pub fn walker(astnode: &ASTNode, mut program_state: &mut ProgramState) -> Value 
             _ => panic!("cant run non lambda as lambda"),
         },
         ASTNode::Operator(operator, branchs) => match operator {
-            Operator::List => Value::List(branchs.into_iter().map(|x| walker(x, &mut program_state)).rev().collect()),
+            Operator::List => {
+                let mut the_list: Vec<Value> = Vec::new();
+                for branch in branchs {
+                    the_list.push(walker(&branch, &mut program_state));
+                }
+                Value::List(the_list)
+                // Value::List(branchs.into_iter().map(|x| walker(x, &mut program_state)).rev().collect())
+            },
             Operator::Nth => {
                 let the_list: Vec<Value> = walker(&branchs[0], &mut program_state).extract_list();
                 let index: usize = walker(&branchs[1], &mut program_state).extract_int() as usize;
                 the_list[index].clone()
             },
+            Operator::Setnth => {
+                let mut the_list: Vec<Value> = walker(&branchs[0], &mut program_state).extract_list();
+                let index: usize = walker(&branchs[1], &mut program_state).extract_int() as usize;
+                let setto: Value = walker(&branchs[2], &mut program_state);
+                the_list[index] = setto;
+                Value::List(the_list)
+            },
+            Operator::Len => Value::Int(walker(&branchs[0], &mut program_state).extract_list().len() as i32),
             Operator::Lambda => {
                 let mut argnames: Vec<String> = Vec::new();
                 for branch in &branchs[1..] {

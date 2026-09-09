@@ -66,3 +66,13 @@ example programs:
 	(> (nth alist 1))
 )
 ```
+```lisp
+(:
+	(= alist (list 1 5 4))
+	(= i 0)
+	(loop (len alist) (:
+		(> (nth alist i))
+		(= i (+ i 1))
+	))
+)
+```

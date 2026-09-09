@@ -4,6 +4,8 @@ use crate::fs;
 pub enum Operator {
     List,
     Nth,
+    Setnth,
+    Len,
     Lambda,
     If,
     Loop,
@@ -65,6 +67,8 @@ impl Lexer {
                 Err(_) => match tempbuf.as_str() {
                     "list" => Token::Operator(Operator::List),
                     "nth" => Token::Operator(Operator::Nth),
+                    "setnth" => Token::Operator(Operator::Setnth),
+                    "len" => Token::Operator(Operator::Len),
                     "true" => Token::True,
                     "false" => Token::False,
                     "if" => Token::Operator(Operator::If),

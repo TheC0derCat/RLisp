@@ -30,8 +30,8 @@ impl Value {
                     0
                 }
             }
-            _ => panic!("cant extract int out of non number"),
             Value::Null => 0,
+            _ => panic!("cant extract int out of non number"),
         }
     }
     pub fn extract_bool(&self) -> bool {
@@ -47,8 +47,8 @@ impl Value {
                 "false" => false,
                 _ => panic!("cant extract bool from non bool"),
             },
-            _ => panic!("cant extract bool from non bool"),
             Value::Null => false,
+            _ => panic!("cant extract bool from non bool"),
         }
     }
     pub fn extract_lambda(&self) -> ASTNode {

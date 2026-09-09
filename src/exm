@@ -1,4 +1,8 @@
 (:
 	(= alist (list 1 5 4))
-	(> (nth alist 1))
+	(= i 0)
+	(loop (len alist) (:
+		(> (nth alist i))
+		(= i (+ i 1))
+	))
 )
